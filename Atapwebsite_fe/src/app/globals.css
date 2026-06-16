@@ -1,0 +1,80 @@
+@import "tailwindcss";
+
+:root {
+  --atap-cream: #f3f0ea;
+  --atap-paper: #fffdf9;
+  --atap-brown: #3d2a18;
+  --atap-caramel: #b98945;
+  --atap-green: #3b864b;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at top left, rgba(185, 137, 69, 0.24), transparent 32rem),
+    linear-gradient(135deg, #17110c 0%, #2a1d14 50%, #0f0d0b 100%);
+  color: #231f1a;
+  font-family: var(--font-sans), ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+button {
+  -webkit-tap-highlight-color: transparent;
+}
+
+.font-display {
+  font-family: var(--font-display), Georgia, "Times New Roman", serif;
+}
+
+.atap-scrollbar {
+  scrollbar-width: none;
+}
+
+.atap-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.sheet-enter {
+  animation: sheet-enter 220ms ease-out;
+}
+
+.fade-enter {
+  animation: fade-enter 160ms ease-out;
+}
+
+@keyframes sheet-enter {
+  from {
+    opacity: 0;
+    transform: translateY(28px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes fade-enter {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
