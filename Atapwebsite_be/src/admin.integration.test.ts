@@ -1,67 +1,62 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { dateToFirestore, db, closeDatabase } from "./config/database";
+import { AdminRole } from "./entity/domain.entity";
+import { hashPassword } from "./helper/password.helper";
 
 test("integration: admin login, create order, and update payment status", async (t) => {
-  if (process.env.RUN_INTEGRATION_TESTS !== "1" || !process.env.TEST_DATABASE_URL) {
-    t.skip("Set RUN_INTEGRATION_TESTS=1 and TEST_DATABASE_URL to run database integration tests.");
+  if (process.env.RUN_INTEGRATION_TESTS !== "1" || !process.env.FIREBASE_PROJECT_ID) {
+    t.skip("Set RUN_INTEGRATION_TESTS=1 and FIREBASE_PROJECT_ID to run Firebase integration tests.");
     return;
   }
 
-  process.env.DATABASE_URL = process.env.TEST_DATABASE_URL;
-
   const { buildApp } = await import("./app.js");
-  const { prisma } = await import("./config/database.js");
-  const { hashPassword } = await import("./helper/password.helper.js");
-
   const app = await buildApp();
+  const now = new Date();
+
   t.after(async () => {
+    await db.collection("menuItems").doc("integration-coffee").delete();
+    await db.collection("categories").doc("integration-minuman").delete();
+    await db.collection("adminUsers").doc("integration-admin").delete();
     await app.close();
-    await prisma.$disconnect();
+    await closeDatabase();
   });
 
-  const category = await prisma.category.upsert({
-    where: { slug: "integration-minuman" },
-    update: {},
-    create: {
-      name: "Integration Minuman",
-      slug: "integration-minuman",
-    },
+  await db.collection("categories").doc("integration-minuman").set({
+    name: "Integration Minuman",
+    slug: "integration-minuman",
+    displayOrder: 99,
+    isActive: true,
+    createdAt: dateToFirestore(now),
+    updatedAt: dateToFirestore(now),
   });
-  const menuItem = await prisma.menuItem.upsert({
-    where: { slug: "integration-coffee" },
-    update: {
-      categoryId: category.id,
-      isAvailable: true,
-    },
-    create: {
-      categoryId: category.id,
-      name: "Integration Coffee",
-      slug: "integration-coffee",
-      description: "Integration test item",
-      price: 12000,
-      imageUrl: "https://example.com/integration-coffee.jpg",
-      isAvailable: true,
-    },
+  await db.collection("menuItems").doc("integration-coffee").set({
+    categoryId: "integration-minuman",
+    name: "Integration Coffee",
+    slug: "integration-coffee",
+    description: "Integration test item",
+    price: 12000,
+    imageUrl: "https://example.com/integration-coffee.jpg",
+    isAvailable: true,
+    isFeatured: false,
+    createdAt: dateToFirestore(now),
+    updatedAt: dateToFirestore(now),
   });
-  const admin = await prisma.adminUser.upsert({
-    where: { username: "integration-admin" },
-    update: {
-      passwordHash: hashPassword("123456"),
-      isActive: true,
-    },
-    create: {
-      name: "Integration Admin",
-      username: "integration-admin",
-      passwordHash: hashPassword("123456"),
-      role: "OWNER",
-    },
+  await db.collection("adminUsers").doc("integration-admin").set({
+    name: "Integration Admin",
+    username: "integration-admin",
+    passwordHash: hashPassword("123456"),
+    role: AdminRole.OWNER,
+    isActive: true,
+    createdAt: dateToFirestore(now),
+    updatedAt: dateToFirestore(now),
   });
 
   const loginResponse = await app.inject({
     method: "POST",
     url: "/api/admin/auth/login",
     payload: {
-      username: admin.username,
+      username: "integration-admin",
       password: "123456",
     },
   });
@@ -77,10 +72,16 @@ test("integration: admin login, create order, and update payment status", async 
       tableCode: "IN-TEST",
       customerName: "Integration Customer",
       paymentMethod: "QRIS",
-      items: [{ menuItemId: menuItem.id, quantity: 1 }],
+      items: [{ menuItemId: "integration-coffee", quantity: 1 }],
     },
   });
   const order = createOrderResponse.json().data as { id: string; paymentStatus: string };
+
+  t.after(async () => {
+    if (order?.id) {
+      await db.collection("orders").doc(order.id).delete();
+    }
+  });
 
   assert.equal(createOrderResponse.statusCode, 201);
   assert.equal(order.paymentStatus, "PENDING");

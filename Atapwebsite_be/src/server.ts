@@ -1,6 +1,6 @@
-import "dotenv/config";
+import "./config/env";
 import { buildApp } from "./app";
-import { prisma } from "./config/database";
+import { closeDatabase } from "./config/database";
 
 const port = Number(process.env.PORT ?? 4000);
 const host = process.env.HOST ?? "0.0.0.0";
@@ -10,7 +10,7 @@ async function main() {
 
   const close = async () => {
     await app.close();
-    await prisma.$disconnect();
+    await closeDatabase();
   };
 
   process.on("SIGINT", close);
@@ -21,6 +21,6 @@ async function main() {
 
 main().catch(async (error) => {
   console.error(error);
-  await prisma.$disconnect();
+  await closeDatabase();
   process.exit(1);
 });

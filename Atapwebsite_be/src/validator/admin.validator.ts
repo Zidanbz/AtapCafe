@@ -1,4 +1,4 @@
-import { OrderStatus, PaymentStatus } from "@prisma/client";
+import { OrderStatus, PaymentStatus } from "../entity/domain.entity";
 import type {
   AdminLoginBody,
   AdminLoginInput,

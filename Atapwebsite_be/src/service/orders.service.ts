@@ -1,4 +1,4 @@
-import { OrderStatus, OrderType, PaymentStatus } from "@prisma/client";
+import { OrderStatus, OrderType, PaymentStatus } from "../entity/domain.entity";
 import type { CreateOrderInput } from "../dto/orders.dto";
 import { createOrderNumber } from "../helper/order-number.helper";
 import { mapOrder } from "../helper/orders.mapper";
@@ -27,7 +27,7 @@ export async function createOrder(input: CreateOrderInput) {
       nameSnapshot: menuItem.name,
       priceSnapshot: menuItem.price,
       quantity: item.quantity,
-      note: item.note,
+      note: item.note ?? null,
       subtotal: menuItem.price * item.quantity,
     };
   });
@@ -40,7 +40,7 @@ export async function createOrder(input: CreateOrderInput) {
     input.orderType === OrderType.DINE_IN ? await upsertDiningTable(input.tableCode, getTableArea(input.tableCode)) : null;
   const order = await createOrderWithDetails({
     orderNumber: createOrderNumber(),
-    table: table ? { connect: { id: table.id } } : undefined,
+    tableId: table?.id ?? null,
     customerName: input.customerName ?? null,
     customerContact: input.customerContact ?? null,
     orderType: input.orderType,
@@ -50,15 +50,11 @@ export async function createOrder(input: CreateOrderInput) {
     additionalCost,
     total,
     orderNote: input.orderNote ?? null,
-    items: {
-      create: orderItems,
-    },
+    items: orderItems,
     payment: {
-      create: {
-        method: input.paymentMethod,
-        status: paymentStatus,
-        amount: total,
-      },
+      method: input.paymentMethod,
+      status: paymentStatus,
+      amount: total,
     },
   });
 

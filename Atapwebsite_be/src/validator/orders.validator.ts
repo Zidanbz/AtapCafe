@@ -1,4 +1,4 @@
-import { OrderType, PaymentMethod } from "@prisma/client";
+import { OrderType, PaymentMethod } from "../entity/domain.entity";
 import type { CreateOrderBody, CreateOrderInput } from "../dto/orders.dto";
 import { badRequest } from "../util/http-error";
 

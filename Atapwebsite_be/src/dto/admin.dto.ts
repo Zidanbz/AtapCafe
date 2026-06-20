@@ -1,4 +1,4 @@
-import type { AdminRole, OrderStatus, PaymentStatus } from "@prisma/client";
+import type { AdminRole, OrderStatus, PaymentStatus } from "../entity/domain.entity";
 import type { OrderResponse } from "./orders.dto";
 
 export type AdminOrdersQuery = {

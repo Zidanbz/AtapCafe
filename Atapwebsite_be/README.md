@@ -1,8 +1,8 @@
 # Atap Website Backend
 
-Backend scaffold untuk Atap Website.
+Backend API untuk Atap Website.
 
-Database lokal memakai MySQL + Prisma.
+Database memakai Firebase Firestore melalui Firebase Admin SDK.
 
 ## Menjalankan
 
@@ -25,26 +25,34 @@ Health check database:
 http://localhost:4000/health/database
 ```
 
-## Setup MySQL Lokal
+## Setup Firebase
 
-1. Buat database MySQL:
-
-```sql
-CREATE DATABASE atap_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-```
-
-2. Sesuaikan `.env`:
+1. Buat project di Firebase Console.
+2. Aktifkan Firestore Database.
+3. Buat service account key di Project Settings -> Service accounts.
+4. Salin nilai credential ke `.env`:
 
 ```env
 PORT=4000
-DATABASE_URL="mysql://root:password@localhost:3306/atap_db"
+FIREBASE_PROJECT_ID="atap-cafe"
+FIREBASE_CLIENT_EMAIL="firebase-adminsdk-xxxxx@atap-cafe.iam.gserviceaccount.com"
+FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nISI_PRIVATE_KEY\n-----END PRIVATE KEY-----\n"
+ADMIN_AUTH_SECRET="change-this-secret"
 ```
 
-3. Jalankan migration dan seed:
+Alternatif lokal: pakai `GOOGLE_APPLICATION_CREDENTIALS=/path/service-account.json` dan cukup isi `FIREBASE_PROJECT_ID`.
+
+Seed data awal:
 
 ```bash
-npm run db:migrate -- --name init
 npm run db:seed
+```
+
+Admin default dari seed:
+
+```text
+username: admin
+password: 123456
 ```
 
 ## Script
@@ -53,10 +61,9 @@ npm run db:seed
 - `npm run build` compile TypeScript ke `dist`.
 - `npm run start` menjalankan hasil build.
 - `npm run typecheck` mengecek TypeScript tanpa emit.
-- `npm run db:generate` generate Prisma Client.
-- `npm run db:migrate` menjalankan migration Prisma ke MySQL lokal.
-- `npm run db:seed` mengisi data awal Atap.
-- `npm run db:studio` membuka Prisma Studio.
+- `npm test` menjalankan unit test.
+- `npm run test:integration` menjalankan integration test Firebase jika env sudah siap.
+- `npm run db:seed` mengisi data awal Firestore.
 
 ## Endpoint Awal
 
@@ -75,13 +82,43 @@ curl -X POST http://localhost:4000/api/orders \
   -H "content-type: application/json" \
   -d '{
     "tableCode": "IN-01",
+    "customerName": "Budi",
     "paymentMethod": "QRIS",
     "items": [
       {
-        "menuItemId": "ISI_DENGAN_ID_MENU_ITEM",
+        "menuItemId": "kopi-susu",
         "quantity": 2,
         "note": "less sugar"
       }
     ]
   }'
 ```
+
+## Deploy ke Firebase Functions
+
+Project Firebase default diset di `.firebaserc`:
+
+```text
+atapcafe-7909e
+```
+
+Backend diexport sebagai HTTP Function bernama `api`. Deploy dari root project:
+
+```bash
+firebase deploy --only functions:backend
+```
+
+URL API setelah deploy biasanya berbentuk:
+
+```text
+https://asia-southeast2-atapcafe-7909e.cloudfunctions.net/api
+```
+
+Untuk lokal, backend tetap bisa dijalankan seperti biasa:
+
+```bash
+cd Atapwebsite_be
+npm run dev
+```
+
+Catatan: `serviceAccountKey.json` hanya untuk lokal dan tidak ikut deploy. Di Firebase Functions, kredensial Firestore otomatis memakai service account bawaan project.

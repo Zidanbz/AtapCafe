@@ -1,5 +1,5 @@
 import { createHmac, timingSafeEqual } from "crypto";
-import type { AdminRole } from "@prisma/client";
+import type { AdminRole } from "../entity/domain.entity";
 
 const TOKEN_TTL_SECONDS = 60 * 60 * 8;
 
@@ -19,7 +19,7 @@ function base64UrlDecode(value: string) {
 }
 
 function getSecret() {
-  return process.env.ADMIN_AUTH_SECRET || process.env.DATABASE_URL || "atap-dev-secret";
+  return process.env.ADMIN_AUTH_SECRET || process.env.FIREBASE_PROJECT_ID || "atap-dev-secret";
 }
 
 function sign(value: string) {

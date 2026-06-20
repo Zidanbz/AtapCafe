@@ -1,7 +1,7 @@
 import type { AdminOrderWithDetails } from "../entity/admin.entity";
 import type { AdminMenuItemResponse, AdminOrderResponse, AdminUserResponse } from "../dto/admin.dto";
 import { mapOrder } from "./orders.mapper";
-import type { AdminUser, Category, MenuItem } from "@prisma/client";
+import type { AdminMenuItemWithCategory, AdminUser } from "../entity/domain.entity";
 
 export function mapAdminOrder(order: AdminOrderWithDetails): AdminOrderResponse {
   return mapOrder(order);
@@ -16,7 +16,7 @@ export function mapAdminUser(user: AdminUser): AdminUserResponse {
   };
 }
 
-export function mapAdminMenuItem(menuItem: MenuItem & { category: Category }): AdminMenuItemResponse {
+export function mapAdminMenuItem(menuItem: AdminMenuItemWithCategory): AdminMenuItemResponse {
   return {
     id: menuItem.id,
     categoryId: menuItem.categoryId,

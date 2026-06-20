@@ -1,4 +1,4 @@
-import type { OrderStatus, OrderType, PaymentMethod, PaymentStatus } from "@prisma/client";
+import type { OrderStatus, OrderType, PaymentMethod, PaymentStatus } from "../entity/domain.entity";
 
 export type CreateOrderBody = {
   tableCode?: string;
