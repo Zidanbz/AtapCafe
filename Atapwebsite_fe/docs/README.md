@@ -55,6 +55,20 @@ http://localhost:4000/health
 - Frontend: `npm run dev`, `npm run build`, `npm run typecheck`.
 - Backend: `npm run dev`, `npm run build`, `npm run typecheck`.
 
+## Deploy Frontend ke Vercel
+
+Frontend dideploy dari folder `Atapwebsite_fe` dengan Root Directory Vercel `Atapwebsite_fe`.
+
+Environment frontend yang perlu diisi di Vercel:
+
+```env
+NEXT_PUBLIC_API_URL="https://api-oemrkqzxdq-et.a.run.app"
+NEXT_PUBLIC_MIDTRANS_CLIENT_KEY="isi-client-key-midtrans-sandbox"
+NEXT_PUBLIC_MIDTRANS_SNAP_URL="https://app.sandbox.midtrans.com/snap/snap.js"
+```
+
+Detail langkah deploy ada di `docs/vercel-deploy.md`.
+
 ## Struktur Utama
 
 ```text

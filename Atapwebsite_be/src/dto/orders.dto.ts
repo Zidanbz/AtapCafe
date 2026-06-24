@@ -68,4 +68,9 @@ export type OrderResponse = {
     amount: number;
     paidAt: Date | null;
   } | null;
+  midtrans?: {
+    token: string;
+    redirectUrl: string;
+    snapJsUrl: string;
+  };
 };

@@ -64,6 +64,7 @@ export async function fetchMenuData(): Promise<MenuData> {
 export async function createOrder(payload: {
   tableCode: string;
   customerName: string;
+  paymentMethod: "CASH" | "QRIS";
   orderNote?: string;
   items: Array<{
     menuItemId: string;
@@ -71,7 +72,7 @@ export async function createOrder(payload: {
     note?: string;
   }>;
 }) {
-  return parseApiResponse<{ total: number; orderNumber: string }>(
+  return parseApiResponse<{ total: number; orderNumber: string; midtrans?: { token: string; redirectUrl: string; snapJsUrl: string } }>(
     await fetch(`${API_BASE_URL}/api/orders`, {
       method: "POST",
       headers: {
@@ -79,7 +80,6 @@ export async function createOrder(payload: {
       },
       body: JSON.stringify({
         ...payload,
-        paymentMethod: "QRIS",
       }),
     }),
   );

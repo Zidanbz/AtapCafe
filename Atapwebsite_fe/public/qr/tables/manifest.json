@@ -1,0 +1,85 @@
+{
+  "baseUrl": "https://atap-cafe.vercel.app",
+  "route": "/menu",
+  "queryParam": "table",
+  "generatedAt": "2026-06-25",
+  "tables": [
+    {
+      "area": "Indoor Non Smoke",
+      "code": "IN-01",
+      "url": "https://atap-cafe.vercel.app/menu?table=IN-01",
+      "png": "IN-01.png",
+      "svg": "IN-01.svg"
+    },
+    {
+      "area": "Indoor Non Smoke",
+      "code": "IN-02",
+      "url": "https://atap-cafe.vercel.app/menu?table=IN-02",
+      "png": "IN-02.png",
+      "svg": "IN-02.svg"
+    },
+    {
+      "area": "Indoor Non Smoke",
+      "code": "IN-03",
+      "url": "https://atap-cafe.vercel.app/menu?table=IN-03",
+      "png": "IN-03.png",
+      "svg": "IN-03.svg"
+    },
+    {
+      "area": "Indoor Non Smoke",
+      "code": "IN-04",
+      "url": "https://atap-cafe.vercel.app/menu?table=IN-04",
+      "png": "IN-04.png",
+      "svg": "IN-04.svg"
+    },
+    {
+      "area": "Indoor Non Smoke",
+      "code": "IN-05",
+      "url": "https://atap-cafe.vercel.app/menu?table=IN-05",
+      "png": "IN-05.png",
+      "svg": "IN-05.svg"
+    },
+    {
+      "area": "Indoor Non Smoke",
+      "code": "IN-06",
+      "url": "https://atap-cafe.vercel.app/menu?table=IN-06",
+      "png": "IN-06.png",
+      "svg": "IN-06.svg"
+    },
+    {
+      "area": "Indoor Smoke",
+      "code": "IN2-01",
+      "url": "https://atap-cafe.vercel.app/menu?table=IN2-01",
+      "png": "IN2-01.png",
+      "svg": "IN2-01.svg"
+    },
+    {
+      "area": "Indoor Smoke",
+      "code": "IN2-02",
+      "url": "https://atap-cafe.vercel.app/menu?table=IN2-02",
+      "png": "IN2-02.png",
+      "svg": "IN2-02.svg"
+    },
+    {
+      "area": "Indoor Smoke",
+      "code": "IN2-03",
+      "url": "https://atap-cafe.vercel.app/menu?table=IN2-03",
+      "png": "IN2-03.png",
+      "svg": "IN2-03.svg"
+    },
+    {
+      "area": "Indoor Smoke",
+      "code": "IN2-04",
+      "url": "https://atap-cafe.vercel.app/menu?table=IN2-04",
+      "png": "IN2-04.png",
+      "svg": "IN2-04.svg"
+    },
+    {
+      "area": "Indoor Smoke",
+      "code": "IN2-05",
+      "url": "https://atap-cafe.vercel.app/menu?table=IN2-05",
+      "png": "IN2-05.png",
+      "svg": "IN2-05.svg"
+    }
+  ]
+}

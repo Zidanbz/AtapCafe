@@ -8,6 +8,7 @@ import {
   type OrderItem,
   type OrderWithDetails,
   type Payment,
+  type PaymentStatus as PaymentStatusType,
 } from "../entity/domain.entity";
 
 type CreateOrderItemData = Pick<OrderItem, "menuItemId" | "nameSnapshot" | "priceSnapshot" | "quantity" | "note" | "subtotal">;
@@ -182,4 +183,90 @@ export async function createOrderWithDetails(data: CreateOrderData) {
     id: orderRef.id,
     ...order,
   });
+}
+
+
+export async function updateOrderMidtransSnap(id: string, input: { token: string; redirectUrl: string }) {
+  const ref = db.collection("orders").doc(id);
+  const doc = await ref.get();
+
+  if (!doc.exists) {
+    throw new Error("Order not found.");
+  }
+
+  const order = normalizeOrder({ id: doc.id, ...doc.data() } as Omit<OrderWithDetails, "table">);
+  const now = new Date();
+  const payment = order.payment
+    ? {
+        ...order.payment,
+        midtransToken: input.token,
+        midtransRedirectUrl: input.redirectUrl,
+        updatedAt: now,
+      }
+    : null;
+
+  await ref.update({
+    payment: payment
+      ? {
+          ...payment,
+          paidAt: dateToFirestore(payment.paidAt),
+          createdAt: dateToFirestore(payment.createdAt),
+          updatedAt: dateToFirestore(payment.updatedAt),
+        }
+      : null,
+    updatedAt: dateToFirestore(now),
+  });
+}
+
+export async function updateOrderPaymentFromMidtrans(
+  id: string,
+  input: {
+    paymentStatus: PaymentStatusType;
+    transactionStatus: string;
+    fraudStatus: string;
+    paymentType: string | null;
+    transactionId: string | null;
+    transactionTime: string | null;
+    settlementTime: string | null;
+  },
+) {
+  const ref = db.collection("orders").doc(id);
+  const doc = await ref.get();
+
+  if (!doc.exists) {
+    throw new Error("Order not found.");
+  }
+
+  const order = normalizeOrder({ id: doc.id, ...doc.data() } as Omit<OrderWithDetails, "table">);
+  const now = new Date();
+  const paidAt = input.paymentStatus === "PAID" ? new Date(input.settlementTime || input.transactionTime || now) : order.payment?.paidAt ?? null;
+  const payment = order.payment
+    ? {
+        ...order.payment,
+        status: input.paymentStatus,
+        paidAt,
+        midtransTransactionStatus: input.transactionStatus,
+        midtransFraudStatus: input.fraudStatus,
+        midtransPaymentType: input.paymentType,
+        midtransTransactionId: input.transactionId,
+        updatedAt: now,
+      }
+    : null;
+
+  await ref.update({
+    paymentStatus: input.paymentStatus,
+    status: input.paymentStatus === "PAID" ? "IN_PROCESS" : order.status,
+    payment: payment
+      ? {
+          ...payment,
+          paidAt: dateToFirestore(payment.paidAt),
+          createdAt: dateToFirestore(payment.createdAt),
+          updatedAt: dateToFirestore(payment.updatedAt),
+        }
+      : null,
+    updatedAt: dateToFirestore(now),
+  });
+
+  const updated = await ref.get();
+  return attachOrderDetails({ id: updated.id, ...updated.data() } as Omit<OrderWithDetails, "table">);
 }

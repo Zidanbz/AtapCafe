@@ -3,8 +3,9 @@ import type { CreateOrderInput } from "../dto/orders.dto";
 import { createOrderNumber } from "../helper/order-number.helper";
 import { mapOrder } from "../helper/orders.mapper";
 import { getTableArea } from "../helper/table.helper";
-import { createOrderWithDetails, findAvailableMenuItemsByIds, upsertDiningTable } from "../repo/orders.repo";
+import { createOrderWithDetails, findAvailableMenuItemsByIds, updateOrderMidtransSnap, upsertDiningTable } from "../repo/orders.repo";
 import { badRequest } from "../util/http-error";
+import { createMidtransSnapTransaction, getMidtransSnapJsUrl } from "./midtrans.service";
 
 export async function createOrder(input: CreateOrderInput) {
   const menuItemIds = [...new Set(input.items.map((item) => item.menuItemId))];
@@ -58,5 +59,21 @@ export async function createOrder(input: CreateOrderInput) {
     },
   });
 
-  return mapOrder(order);
+  const response = mapOrder(order);
+
+  if (input.paymentMethod === "QRIS") {
+    const snap = await createMidtransSnapTransaction(order);
+    await updateOrderMidtransSnap(order.id, snap);
+
+    return {
+      ...response,
+      midtrans: {
+        token: snap.token,
+        redirectUrl: snap.redirectUrl,
+        snapJsUrl: getMidtransSnapJsUrl(),
+      },
+    };
+  }
+
+  return response;
 }

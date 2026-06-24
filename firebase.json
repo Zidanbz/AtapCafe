@@ -1,0 +1,22 @@
+{
+  "functions": [
+    {
+      "source": "Atapwebsite_be",
+      "codebase": "backend",
+      "runtime": "nodejs22",
+      "ignore": [
+        "node_modules",
+        ".git",
+        "firebase-debug.log",
+        "firebase-debug.*.log",
+        "*.local",
+        "serviceAccountKey.json",
+        "*.serviceAccountKey.json",
+        "uploads"
+      ],
+      "predeploy": [
+        "npm --prefix \"$RESOURCE_DIR\" run build"
+      ]
+    }
+  ]
+}

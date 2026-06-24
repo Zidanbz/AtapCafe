@@ -1,6 +1,7 @@
 import type { FastifyReply, FastifyRequest } from "fastify";
 import type { CreateOrderBody } from "../dto/orders.dto";
 import { createOrder } from "../service/orders.service";
+import { handleMidtransNotification } from "../service/payments.service";
 import { validateCreateOrderBody } from "../validator/orders.validator";
 
 export async function createOrderController(request: FastifyRequest<{ Body: CreateOrderBody }>, reply: FastifyReply) {
@@ -11,5 +12,12 @@ export async function createOrderController(request: FastifyRequest<{ Body: Crea
 
   return {
     data: order,
+  };
+}
+
+
+export async function midtransNotificationController(request: FastifyRequest, _reply: FastifyReply) {
+  return {
+    data: await handleMidtransNotification(request.body),
   };
 }

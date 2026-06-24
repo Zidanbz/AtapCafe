@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { ArrowLeft, QrCode, Send } from "lucide-react";
+import { ArrowLeft, Banknote, CreditCard, Send } from "lucide-react";
 import { MobileShell } from "@/components/layout/MobileShell";
 import { QuantityStepper } from "@/features/ordering/components/QuantityStepper";
 import { SuccessState } from "@/features/ordering/components/SuccessState";
@@ -11,11 +11,68 @@ import { useCart } from "@/features/ordering/hooks/useCart";
 import { useTableNumber } from "@/features/ordering/hooks/useTableNumber";
 import { formatRupiah } from "@/features/ordering/utils/format-rupiah";
 
+type MidtransSnapCallbacks = {
+  onSuccess?: (result: unknown) => void;
+  onPending?: (result: unknown) => void;
+  onError?: (result: unknown) => void;
+  onClose?: () => void;
+};
+
+declare global {
+  interface Window {
+    snap?: {
+      pay: (token: string, callbacks?: MidtransSnapCallbacks) => void;
+    };
+  }
+}
+
+const MIDTRANS_CLIENT_KEY = process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY;
+const MIDTRANS_SNAP_URL = process.env.NEXT_PUBLIC_MIDTRANS_SNAP_URL ?? "https://app.sandbox.midtrans.com/snap/snap.js";
+type PaymentMethod = "CASH" | "QRIS";
+
+function loadMidtransSnapScript(src: string, clientKey: string) {
+  return new Promise<void>((resolve, reject) => {
+    if (window.snap) {
+      resolve();
+      return;
+    }
+
+    const existingScript = document.querySelector<HTMLScriptElement>(`script[src="${src}"]`);
+
+    if (existingScript) {
+      existingScript.addEventListener("load", () => resolve(), { once: true });
+      existingScript.addEventListener("error", () => reject(new Error("Midtrans belum bisa dimuat.")), { once: true });
+      return;
+    }
+
+    const script = document.createElement("script");
+    script.src = src;
+    script.async = true;
+    script.dataset.clientKey = clientKey;
+    script.onload = () => resolve();
+    script.onerror = () => reject(new Error("Midtrans belum bisa dimuat."));
+    document.body.appendChild(script);
+  });
+}
+
+function openMidtransPayment(token: string) {
+  return new Promise<"success" | "pending">((resolve, reject) => {
+    window.snap?.pay(token, {
+      onSuccess: () => resolve("success"),
+      onPending: () => resolve("pending"),
+      onError: () => reject(new Error("Pembayaran gagal diproses.")),
+      onClose: () => reject(new Error("Pembayaran belum diselesaikan.")),
+    });
+  });
+}
+
 export function CheckoutPage() {
   const table = useTableNumber();
   const { clearCart, items, orderNote, subtotal, updateQuantity } = useCart();
   const [customerName, setCustomerName] = useState("");
   const [submittedTotal, setSubmittedTotal] = useState<number | null>(null);
+  const [submittedPaymentMethod, setSubmittedPaymentMethod] = useState<PaymentMethod>("QRIS");
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("QRIS");
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const totalQuantity = useMemo(() => items.reduce((total, item) => total + item.quantity, 0), [items]);
@@ -33,6 +90,7 @@ export function CheckoutPage() {
       const order = await createOrder({
         tableCode: table,
         customerName: customerName.trim(),
+        paymentMethod,
         orderNote,
         items: items.map((item) => ({
           menuItemId: item.product.id,
@@ -41,6 +99,19 @@ export function CheckoutPage() {
         })),
       });
 
+      if (order.midtrans?.token) {
+        if (!MIDTRANS_CLIENT_KEY) {
+          throw new Error("Midtrans client key belum dikonfigurasi.");
+        }
+
+        await loadMidtransSnapScript(order.midtrans.snapJsUrl || MIDTRANS_SNAP_URL, MIDTRANS_CLIENT_KEY);
+        await openMidtransPayment(order.midtrans.token);
+      } else if (order.midtrans?.redirectUrl) {
+        window.location.href = order.midtrans.redirectUrl;
+        return;
+      }
+
+      setSubmittedPaymentMethod(paymentMethod);
       setSubmittedTotal(order.total);
       clearCart();
     } catch (submitError) {
@@ -58,7 +129,7 @@ export function CheckoutPage() {
           <h1 className="font-display text-center text-xl font-bold">Payment</h1>
           <span />
         </header>
-        <SuccessState table={table} total={submittedTotal} />
+        <SuccessState table={table} total={submittedTotal} paymentMethod={submittedPaymentMethod} />
       </MobileShell>
     );
   }
@@ -96,15 +167,42 @@ export function CheckoutPage() {
                 className="mt-2 h-11 w-full rounded-xl border border-[#dcd3c8] bg-[#f4f1ec] px-3 text-sm outline-none focus:border-[#3b864b] focus:ring-4 focus:ring-[#3b864b]/15"
               />
             </label>
-            <div className="grid grid-cols-[42px_1fr_auto] items-center gap-3 rounded-2xl border border-[#d8ead8] bg-white p-4 shadow-[0_10px_24px_rgba(63,50,35,0.08)]">
-              <span className="inline-flex size-10 items-center justify-center rounded-xl bg-[#eff8ef] text-[#3b864b]">
-                <QrCode size={19} />
-              </span>
-              <div>
-                <p className="text-sm font-extrabold text-[#2d261f]">Pembayaran QRIS</p>
-                <p className="mt-0.5 text-xs text-[#7b7066]">Metode pembayaran saat ini hanya QRIS.</p>
+            <div className="rounded-2xl bg-white p-4 shadow-[0_10px_24px_rgba(63,50,35,0.08)]">
+              <p className="text-sm font-bold text-[#6f6257]">Metode Pembayaran</p>
+              <div className="mt-3 grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPaymentMethod("CASH");
+                    setError("");
+                  }}
+                  className={`flex min-h-[92px] flex-col items-start rounded-xl border p-3 text-left transition ${
+                    paymentMethod === "CASH" ? "border-[#3b864b] bg-[#eff8ef] text-[#2d261f]" : "border-[#e2dbd2] bg-[#f8f5f0] text-[#756a5f]"
+                  }`}
+                >
+                  <span className="inline-flex size-9 items-center justify-center rounded-lg bg-white text-[#3b864b]">
+                    <Banknote size={18} />
+                  </span>
+                  <span className="mt-2 text-sm font-extrabold">Cash</span>
+                  <span className="mt-1 text-xs leading-4">Bayar langsung di kasir.</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPaymentMethod("QRIS");
+                    setError("");
+                  }}
+                  className={`flex min-h-[92px] flex-col items-start rounded-xl border p-3 text-left transition ${
+                    paymentMethod === "QRIS" ? "border-[#3b864b] bg-[#eff8ef] text-[#2d261f]" : "border-[#e2dbd2] bg-[#f8f5f0] text-[#756a5f]"
+                  }`}
+                >
+                  <span className="inline-flex size-9 items-center justify-center rounded-lg bg-white text-[#3b864b]">
+                    <CreditCard size={18} />
+                  </span>
+                  <span className="mt-2 text-sm font-extrabold">Cashless</span>
+                  <span className="mt-1 text-xs leading-4">Bayar dengan Midtrans.</span>
+                </button>
               </div>
-              <span className="rounded-full bg-[#eff8ef] px-2 py-1 text-xs font-extrabold text-[#2f8b43]">Aktif</span>
             </div>
           </div>
         ) : null}
@@ -176,7 +274,7 @@ export function CheckoutPage() {
             className="inline-flex h-12 w-full max-w-[398px] items-center justify-center gap-2 rounded-xl bg-[#3b864b] px-4 text-sm font-extrabold text-white shadow-[0_12px_25px_rgba(59,134,75,0.24)] disabled:cursor-not-allowed disabled:opacity-70"
           >
             <Send size={18} />
-            {isSubmitting ? "Mengirim..." : "Kirim Pesanan"}
+            {isSubmitting ? "Memproses..." : paymentMethod === "CASH" ? "Lanjut ke Kasir" : "Bayar Sekarang"}
           </button>
         </div>
       ) : null}
