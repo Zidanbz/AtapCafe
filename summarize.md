@@ -270,8 +270,9 @@ Upload gambar menu:
 
 - Dependency backend: `@fastify/multipart`.
 - Endpoint upload admin: `POST /api/admin/menu/image` dengan auth admin dan multipart field `image`.
-- File saat ini masih disimpan lokal di `Atapwebsite_be/uploads/menu/`.
-- Di Firebase Functions, storage lokal tidak ideal untuk jangka panjang. Prioritas berikutnya: pindah upload gambar ke Firebase Storage.
+- File menu baru disimpan ke Firebase Storage bucket `atapcafe-7909e.firebasestorage.app`.
+- Response upload mengembalikan Firebase Storage download URL dengan token, lalu URL itu disimpan sebagai `imageUrl` di Firestore.
+- Endpoint legacy `GET /uploads/menu/:filename` masih ada, tetapi upload baru tidak lagi memakai local filesystem Firebase Functions.
 
 Verifikasi backend:
 
@@ -442,11 +443,10 @@ Live test terakhir berhasil:
 
 1. Set Midtrans Notification URL di dashboard Sandbox.
 2. Rotate/regenerate Midtrans keys setelah testing karena pernah terlihat.
-3. Pindahkan upload gambar admin dari local filesystem ke Firebase Storage.
-4. Pindahkan secret backend ke Firebase Functions Secrets.
-5. Siapkan mode production Midtrans: production server key, production client key, `MIDTRANS_IS_PRODUCTION=true`, dan production Snap URL.
-6. Tambahkan test khusus create order QRIS yang mock Midtrans.
-7. Review Firestore security/IAM dan backup data.
+3. Pindahkan secret backend ke Firebase Functions Secrets.
+4. Siapkan mode production Midtrans: production server key, production client key, `MIDTRANS_IS_PRODUCTION=true`, dan production Snap URL.
+5. Tambahkan test khusus create order QRIS yang mock Midtrans.
+6. Review Firestore security/IAM, Firebase Storage IAM, dan backup data.
 
 ## Aturan Update File Ini
 

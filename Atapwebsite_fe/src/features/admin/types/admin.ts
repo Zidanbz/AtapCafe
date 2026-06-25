@@ -14,6 +14,7 @@ export type AdminOrder = {
   table: string;
   orderType: "Dine In" | "Take Away";
   items: string[];
+  orderNote: string | null;
   total: number;
   method: PaymentMethod;
   time: string;

@@ -30,9 +30,11 @@ type ApiOrder = {
   table: {
     code: string;
   } | null;
+  orderNote: string | null;
   items: Array<{
     name: string;
     quantity: number;
+    note: string | null;
   }>;
   payment: {
     method: "QRIS" | "CASH";
@@ -146,7 +148,8 @@ function mapOrder(order: ApiOrder): AdminOrder {
     contact: order.customerContact || "-",
     table: order.table?.code || "-",
     orderType: order.orderType === "DINE_IN" ? "Dine In" : "Take Away",
-    items: order.items.map((item) => `${item.name} x${item.quantity}`),
+    items: order.items.map((item) => `${item.name} x${item.quantity}${item.note ? ` (${item.note})` : ""}`),
+    orderNote: order.orderNote,
     total: order.total,
     method: order.payment?.method === "CASH" ? "Tunai" : "QRIS",
     time: createdAt.toLocaleTimeString("id-ID", {

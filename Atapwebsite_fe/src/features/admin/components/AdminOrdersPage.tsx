@@ -110,7 +110,14 @@ function OrderRow({ order, onDelete, onPaymentStatusChange, onStatusChange }: { 
       </td>
       <td className="px-4 py-4 text-sm font-bold">{order.table}</td>
       <td className="px-4 py-4 text-sm">{order.orderType}</td>
-      <td className="px-4 py-4 text-sm leading-6">{order.items.join(", ")}</td>
+      <td className="px-4 py-4 text-sm leading-6">
+        <div>{order.items.join(", ")}</div>
+        {order.orderNote ? (
+          <p className="mt-2 rounded-lg bg-[#f8f5ef] px-3 py-2 text-xs font-semibold leading-5 text-[#7b7066]">
+            Catatan: {order.orderNote}
+          </p>
+        ) : null}
+      </td>
       <td className="px-4 py-4 text-sm font-extrabold">{formatRupiah(order.total)}</td>
       <td className="px-4 py-4">
         <Badge className={methodStyles[order.method]}>{order.method}</Badge>
@@ -159,6 +166,11 @@ function OrderCard({ order, onDelete, onPaymentStatusChange, onStatusChange }: {
           <span className="text-[#7b7066]">Item</span>
           <span className="max-w-[210px] text-right font-semibold">{order.items.join(", ")}</span>
         </div>
+        {order.orderNote ? (
+          <div className="rounded-xl bg-[#f8f5ef] px-3 py-2 text-xs font-semibold leading-5 text-[#7b7066]">
+            Catatan: {order.orderNote}
+          </div>
+        ) : null}
         <div className="flex justify-between gap-4">
           <span className="text-[#7b7066]">Tipe</span>
           <span className="font-semibold">{order.orderType}</span>
@@ -330,7 +342,7 @@ export function AdminOrdersPage() {
     }
 
     return orders.filter((order) =>
-      [order.customerName, order.table, order.method, order.status].some((value) => value.toLowerCase().includes(normalizedQuery)),
+      [order.customerName, order.table, order.method, order.status, order.orderNote ?? "", ...order.items].some((value) => value.toLowerCase().includes(normalizedQuery)),
     );
   }, [orders, query]);
 

@@ -139,19 +139,6 @@ export async function getAdminMenuController(_request: FastifyRequest, _reply: F
   };
 }
 
-function getRequestBaseUrl(request: FastifyRequest) {
-  const forwardedProtocol = request.headers["x-forwarded-proto"];
-  const forwardedHost = request.headers["x-forwarded-host"];
-  const protocol = Array.isArray(forwardedProtocol)
-    ? forwardedProtocol[0]
-    : forwardedProtocol?.split(",")[0]?.trim() || request.protocol;
-  const host = Array.isArray(forwardedHost)
-    ? forwardedHost[0]
-    : forwardedHost?.split(",")[0]?.trim() || request.headers.host || "localhost:4000";
-
-  return `${protocol}://${host}`;
-}
-
 export async function uploadMenuImageController(request: FastifyRequest, reply: FastifyReply) {
   const file = await request.file();
 
@@ -163,7 +150,7 @@ export async function uploadMenuImageController(request: FastifyRequest, reply: 
 
   try {
     return {
-      data: await saveMenuImage(file, getRequestBaseUrl(request)),
+      data: await saveMenuImage(file),
     };
   } catch (error) {
     if (error instanceof Error && error.message.toLowerCase().includes("too large")) {

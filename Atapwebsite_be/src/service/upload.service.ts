@@ -1,10 +1,9 @@
 import type { MultipartFile } from "@fastify/multipart";
 import { randomUUID } from "node:crypto";
-import { mkdir, writeFile } from "node:fs/promises";
-import path from "node:path";
+import { storage } from "../config/database";
 import { badRequest } from "../util/http-error";
 
-const menuUploadDir = path.resolve(process.cwd(), "uploads", "menu");
+const menuUploadPrefix = "menu";
 const allowedImageTypes = new Map([
   ["image/jpeg", "jpg"],
   ["image/png", "png"],
@@ -12,7 +11,13 @@ const allowedImageTypes = new Map([
   ["image/gif", "gif"],
 ]);
 
-export async function saveMenuImage(file: MultipartFile, baseUrl: string) {
+function getFirebaseStorageDownloadUrl(bucketName: string, filePath: string, token: string) {
+  const encodedPath = encodeURIComponent(filePath);
+
+  return `https://firebasestorage.googleapis.com/v0/b/${bucketName}/o/${encodedPath}?alt=media&token=${token}`;
+}
+
+export async function saveMenuImage(file: MultipartFile) {
   const extension = allowedImageTypes.get(file.mimetype);
 
   if (!extension) {
@@ -21,11 +26,22 @@ export async function saveMenuImage(file: MultipartFile, baseUrl: string) {
 
   const buffer = await file.toBuffer();
   const filename = `${randomUUID()}.${extension}`;
+  const filePath = `${menuUploadPrefix}/${filename}`;
+  const downloadToken = randomUUID();
+  const bucket = storage.bucket();
 
-  await mkdir(menuUploadDir, { recursive: true });
-  await writeFile(path.join(menuUploadDir, filename), buffer);
+  await bucket.file(filePath).save(buffer, {
+    contentType: file.mimetype,
+    metadata: {
+      cacheControl: "public, max-age=31536000, immutable",
+      metadata: {
+        firebaseStorageDownloadTokens: downloadToken,
+      },
+    },
+    resumable: false,
+  });
 
   return {
-    imageUrl: `${baseUrl}/uploads/menu/${filename}`,
+    imageUrl: getFirebaseStorageDownloadUrl(bucket.name, filePath, downloadToken),
   };
 }

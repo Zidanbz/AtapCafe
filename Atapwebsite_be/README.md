@@ -3,6 +3,7 @@
 Backend API untuk Atap Website.
 
 Database memakai Firebase Firestore melalui Firebase Admin SDK.
+Upload gambar menu memakai Firebase Storage.
 
 ## Menjalankan
 
@@ -29,14 +30,16 @@ http://localhost:4000/health/database
 
 1. Buat project di Firebase Console.
 2. Aktifkan Firestore Database.
-3. Buat service account key di Project Settings -> Service accounts.
-4. Salin nilai credential ke `.env`:
+3. Aktifkan Firebase Storage.
+4. Buat service account key di Project Settings -> Service accounts.
+5. Salin nilai credential ke `.env`:
 
 ```env
 PORT=4000
 FIREBASE_PROJECT_ID="atap-cafe"
 FIREBASE_CLIENT_EMAIL="firebase-adminsdk-xxxxx@atap-cafe.iam.gserviceaccount.com"
 FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nISI_PRIVATE_KEY\n-----END PRIVATE KEY-----\n"
+STORAGE_BUCKET="atap-cafe.firebasestorage.app"
 ADMIN_AUTH_SECRET="change-this-secret"
 ```
 
@@ -122,3 +125,4 @@ npm run dev
 ```
 
 Catatan: `serviceAccountKey.json` hanya untuk lokal dan tidak ikut deploy. Di Firebase Functions, kredensial Firestore otomatis memakai service account bawaan project.
+Pastikan env `STORAGE_BUCKET` mengarah ke bucket Firebase Storage project yang sama.

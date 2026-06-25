@@ -3,6 +3,7 @@ import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { cert, getApps, initializeApp, applicationDefault, deleteApp, type ServiceAccount } from "firebase-admin/app";
 import { getFirestore, Timestamp, type DocumentData, type QueryDocumentSnapshot } from "firebase-admin/firestore";
+import { getStorage } from "firebase-admin/storage";
 
 function getProjectId() {
   return process.env.FIREBASE_PROJECT_ID || process.env.GCLOUD_PROJECT || process.env.GCP_PROJECT;
@@ -37,14 +38,30 @@ function getCredential() {
   return applicationDefault();
 }
 
+function getStorageBucketName() {
+  const configuredBucket = process.env.STORAGE_BUCKET?.trim();
+
+  if (configuredBucket) {
+    return configuredBucket;
+  }
+
+  const projectId = getProjectId();
+
+  return projectId ? `${projectId}.firebasestorage.app` : undefined;
+}
+
 if (getApps().length === 0) {
+  const storageBucket = getStorageBucketName();
+
   initializeApp({
     credential: getCredential(),
     projectId: getProjectId(),
+    ...(storageBucket ? { storageBucket } : {}),
   });
 }
 
 export const db = getFirestore();
+export const storage = getStorage();
 
 export async function closeDatabase() {
   await Promise.all(getApps().map((app) => deleteApp(app)));
